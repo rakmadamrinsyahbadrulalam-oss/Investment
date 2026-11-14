@@ -1,0 +1,78 @@
+import { useMemo, useState } from 'react'
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { Activity, ArrowDownRight, ArrowUpRight, Bell, BriefcaseBusiness, ChevronDown, CircleHelp, Download, FileText, LayoutDashboard, Menu, Newspaper, Search, Settings2, ShieldAlert, SlidersHorizontal, Wallet, X } from 'lucide-react'
+
+type Tab = 'Overview' | 'Stock Screener' | 'Portfolio' | 'Risk Monitor' | 'Market Brief' | 'Reports' | 'Data Sources'
+const nav: { label: Tab; icon: typeof LayoutDashboard }[] = [
+  { label: 'Overview', icon: LayoutDashboard }, { label: 'Stock Screener', icon: SlidersHorizontal },
+  { label: 'Portfolio', icon: BriefcaseBusiness }, { label: 'Risk Monitor', icon: ShieldAlert },
+  { label: 'Market Brief', icon: Newspaper }, { label: 'Reports', icon: FileText }, { label: 'Data Sources', icon: Settings2 }
+]
+const history = [
+  { day: '09:00', value: 7242 }, { day: '09:30', value: 7254 }, { day: '10:00', value: 7248 },
+  { day: '10:30', value: 7271 }, { day: '11:00', value: 7262 }, { day: '11:30', value: 7285 },
+  { day: '12:00', value: 7278 }, { day: '13:00', value: 7294 }, { day: '13:30', value: 7288 },
+  { day: '14:00', value: 7306 }, { day: '14:30', value: 7298 }, { day: '15:00', value: 7312 }
+]
+const stocks = [
+  { code: 'BBCA', name: 'Bank Central Asia', price: '9.825', change: '+1,18%', sector: 'Financials', signal: 'Watchlist' },
+  { code: 'BBRI', name: 'Bank Rakyat Indonesia', price: '4.120', change: '+0,74%', sector: 'Financials', signal: 'Watchlist' },
+  { code: 'TLKM', name: 'Telkom Indonesia', price: '2.980', change: '-0,33%', sector: 'Infrastructure', signal: 'Neutral' },
+  { code: 'ANTM', name: 'Aneka Tambang', price: '1.765', change: '+2,02%', sector: 'Basic Materials', signal: 'Watchlist' },
+  { code: 'ASII', name: 'Astra International', price: '5.125', change: '-0,58%', sector: 'Industrials', signal: 'Neutral' }
+]
+const fmt = (n: number) => new Intl.NumberFormat('id-ID').format(n)
+export default function App() {
+  const [tab, setTab] = useState<Tab>('Overview')
+  const [query, setQuery] = useState('')
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const [period, setPeriod] = useState('1D')
+  const [transactions, setTransactions] = useState([{ ticker: 'BBCA', qty: 10, avg: 9500 }])
+  const filtered = useMemo(() => stocks.filter(s => (s.code + s.name + s.sector).toLowerCase().includes(query.toLowerCase())), [query])
+  const totalCost = transactions.reduce((a, t) => a + t.qty * t.avg, 0)
+  const addDemo = () => setTransactions(v => [...v, { ticker: 'BBRI', qty: 20, avg: 4050 }])
+  const exportCsv = () => {
+    const csv = 'Ticker,Quantity,Average Cost\n' + transactions.map(t => [t.ticker, t.qty, t.avg].join(',')).join('\n')
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }))
+    const a = document.createElement('a'); a.href = url; a.download = 'nusantara-portfolio-demo.csv'; a.click(); URL.revokeObjectURL(url)
+  }
+  return <div className="shell">
+    <aside className={mobileOpen ? 'sidebar open' : 'sidebar'}>
+      <div className="brand"><div className="brand-mark">NW</div><div><strong>NUSANTARA</strong><span>WEALTH TERMINAL</span></div><button className="mobile-close" onClick={() => setMobileOpen(false)}><X size={18}/></button></div>
+      <div className="workspace-label">WORKSPACE</div>
+      <div className="workspace"><div className="workspace-avatar">FW</div><div><b>Family Wealth</b><small>Investment desk</small></div><ChevronDown size={15}/></div>
+      <div className="nav-label">INTELLIGENCE</div>
+      <nav>{nav.map(item => { const Icon = item.icon; return <button key={item.label} className={tab === item.label ? 'nav-item active' : 'nav-item'} onClick={() => { setTab(item.label); setMobileOpen(false) }}><Icon size={17}/><span>{item.label}</span>{item.label === 'Data Sources' && <i className="nav-dot"/>}</button> })}</nav>
+      <div className="sidebar-bottom"><div className="help"><CircleHelp size={17}/><span>Investment guide</span></div><div className="profile"><div className="profile-avatar">RA</div><div><b>Investment Owner</b><small>Personal workspace</small></div><Settings2 size={16}/></div></div>
+    </aside>
+    {mobileOpen && <button className="scrim" onClick={() => setMobileOpen(false)} aria-label="Close menu"/>}
+    <main className="main">
+      <header className="topbar"><button className="menu-btn" onClick={() => setMobileOpen(true)}><Menu/></button><div className="crumb">Nusantara Wealth <span>/</span> <b>{tab}</b></div><div className="top-actions"><span className="market-status"><i/> MARKET SIMULATION</span><button className="icon-btn" aria-label="Notifications"><Bell size={18}/></button><div className="top-avatar">RA</div></div></header>
+      <div className="content">
+        <div className="page-heading"><div><div className="eyebrow">SATURDAY, 14 NOVEMBER 2026 <span>•</span> INDONESIA</div><h1>{tab === 'Overview' ? 'Market overview' : tab}</h1><p>{tab === 'Overview' ? 'A consolidated view of the Indonesian equity market and your wealth.' : 'Investment intelligence workspace for the Indonesia Stock Exchange.'}</p></div><div className="heading-actions"><button className="secondary-btn" onClick={exportCsv}><Download size={15}/> Export</button><button className="primary-btn" onClick={() => setTab('Data Sources')}><Activity size={15}/> Data status</button></div></div>
+        <div className="demo-banner"><span className="demo-icon">i</span><div><b>DEMO ENVIRONMENT — SIMULATED DATA</b><p>Angka dan pergerakan pasar di halaman ini adalah data ilustrasi, bukan harga IDX aktual atau rekomendasi transaksi.</p></div><span className="demo-tag">NOT LIVE</span></div>
+        {tab === 'Overview' && <>
+          <div className="section-head"><div><h2>Market snapshot</h2><p>Indicative market pulse · simulated values</p></div><span className="updated">As of 15:00 WIB · DEMO</span></div>
+          <div className="metrics">
+            <Metric title="IHSG" value="7.312,45" change="+0,86%" up/><Metric title="IDX30" value="442,18" change="+0,42%" up/><Metric title="LQ45" value="891,62" change="-0,12%"/><Metric title="Market volume" value="18,42 B" change="+6,20%" up/>
+          </div>
+          <div className="dashboard-grid">
+            <section className="panel chart-panel"><div className="panel-head"><div><h3>IHSG performance</h3><p>Illustrative intraday movement</p></div><div className="periods">{['1D','1W','1M','3M','1Y'].map(p => <button key={p} className={period === p ? 'selected' : ''} onClick={() => setPeriod(p)}>{p}</button>)}</div></div><div className="chart-value">7.312,45 <span className="positive"><ArrowUpRight size={15}/> 0,86%</span></div><div className="chart-wrap"><ResponsiveContainer width="100%" height="100%"><AreaChart data={history}><defs><linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#3b9b83" stopOpacity={0.25}/><stop offset="100%" stopColor="#3b9b83" stopOpacity={0}/></linearGradient></defs><CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#253246"/><XAxis dataKey="day" tickLine={false} axisLine={false} tick={{ fill: '#8290a5', fontSize: 11 }}/><YAxis domain={['dataMin - 20','dataMax + 20']} orientation="right" tickLine={false} axisLine={false} tick={{ fill: '#8290a5', fontSize: 11 }}/><Tooltip contentStyle={{ background: '#111c2d', border: '1px solid #2a3b52', borderRadius: 8, color: '#e7edf5' }}/><Area type="monotone" dataKey="value" stroke="#49b79b" strokeWidth={2.2} fill="url(#areaFill)" /></AreaChart></ResponsiveContainer></div><div className="chart-foot"><span><i className="legend-dot"/> IHSG index</span><span>Source: simulated dataset</span></div></section>
+            <section className="panel breadth-panel"><div className="panel-head"><div><h3>Market breadth</h3><p>Advancers vs decliners</p></div><span className="pill">DEMO</span></div><div className="breadth-total">812 <small>stocks tracked</small></div><div className="breadth-bar"><span/><span/><span/></div><div className="breadth-legend"><div><i className="green-dot"/><span>Advancers</span><b>428</b></div><div><i className="red-dot"/><span>Decliners</span><b>276</b></div><div><i className="gray-dot"/><span>Unchanged</span><b>108</b></div></div><div className="divider"/><div className="mini-row"><span>Foreign net flow</span><b className="positive">+Rp 245,8 B</b></div><div className="mini-row"><span>Market turnover</span><b>Rp 12,6 T</b></div></section>
+          </div>
+          <section className="panel table-panel"><div className="panel-head"><div><h3>Selected equities</h3><p>Illustrative watchlist · not trading signals</p></div><button className="text-btn" onClick={() => setTab('Stock Screener')}>Open screener →</button></div><StockTable rows={stocks.slice(0,4)}/></section>
+          <div className="bottom-grid"><section className="panel"><div className="panel-head"><div><h3>Sector pulse</h3><p>Illustrative sector performance</p></div></div>{[['Financials','+1,24%',82],['Basic Materials','+0,91%',68],['Consumer Cyclicals','+0,38%',54],['Infrastructure','-0,22%',31]].map(([n,v,w])=><div className="sector-row" key={String(n)}><span>{n}</span><div className="sector-track"><i style={{width: w+'%'}}/></div><b className={String(v).startsWith('+')?'positive':'negative'}>{v}</b></div>)}</section><section className="panel brief-card"><div className="panel-head"><div><h3>Market brief</h3><p>Signals to monitor</p></div><Newspaper size={18} className="muted"/></div><div className="brief-item"><span className="brief-type">MACRO</span><div><b>Domestic rate & currency watch</b><p>Monitor BI policy direction and Rupiah volatility before adjusting equity exposure.</p></div></div><div className="brief-item"><span className="brief-type amber">SECTOR</span><div><b>Financials lead the session</b><p>Illustrative relative strength; validate with official market data.</p></div></div></section></div>
+        </>}
+        {tab === 'Stock Screener' && <section className="panel table-panel"><div className="panel-head"><div><h3>Equity universe</h3><p>Search the sample IDX watchlist</p></div><div className="searchbox"><Search size={15}/><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search ticker, company, sector..."/></div></div><StockTable rows={filtered}/><p className="table-note">Screening universe is illustrative. No BUY/SELL signal is generated from simulated data.</p></section>}
+        {tab === 'Portfolio' && <><div className="metrics"><Metric title="Invested capital" value={'Rp '+fmt(totalCost)} change="DEMO"/><Metric title="Holdings" value={String(transactions.length)} change="Positions"/><Metric title="Unrealized P&L" value="—" change="Awaiting verified prices"/><Metric title="Realized P&L" value="—" change="No sell transactions"/></div><section className="panel table-panel"><div className="panel-head"><div><h3>Portfolio positions</h3><p>Weighted average cost · sample transactions</p></div><button className="primary-btn" onClick={addDemo}>+ Add demo holding</button></div><table><thead><tr><th>ASSET</th><th>QUANTITY</th><th>AVG. COST</th><th>INVESTED</th><th>VALUATION</th></tr></thead><tbody>{transactions.map((t,i)=><tr key={i}><td><b>{t.ticker}</b><small>IDX equity · DEMO</small></td><td>{t.qty}</td><td>Rp {fmt(t.avg)}</td><td>Rp {fmt(t.qty*t.avg)}</td><td className="muted">Not available</td></tr>)}</tbody></table></section></>}
+        {tab === 'Risk Monitor' && <div className="bottom-grid"><section className="panel"><h3>Portfolio risk status</h3><p className="muted">Risk calculations require verified position prices and history.</p><div className="risk-empty"><ShieldAlert size={28}/><b>Insufficient verified data</b><span>Connect a licensed market data provider and enter portfolio transactions to calculate exposure, volatility, and drawdown.</span></div></section><section className="panel"><h3>Risk controls</h3>{['Single-stock concentration','Sector concentration','Liquidity exposure','Maximum drawdown','Volatility profile'].map(x=><div className="mini-row" key={x}><span>{x}</span><span className="pill">Not calculated</span></div>)}</section></div>}
+        {tab === 'Market Brief' && <section className="panel brief-list"><div className="panel-head"><div><h3>Market intelligence</h3><p>Macro, corporate actions, and sector context</p></div></div><div className="risk-empty"><Newspaper size={28}/><b>No verified news feed connected</b><span>News and macro headlines will appear here after a trusted source is configured. Sample narratives are not presented as current news.</span></div></section>}
+        {tab === 'Reports' && <section className="panel"><div className="panel-head"><div><h3>Investment reports</h3><p>Export current sample portfolio records</p></div><button className="primary-btn" onClick={exportCsv}><Download size={15}/> Export CSV</button></div><div className="report-row"><FileText/><div><b>Portfolio holdings — CSV</b><small>Weighted average cost · simulated positions</small></div><span className="pill">Available</span></div><div className="report-row"><FileText/><div><b>Performance report</b><small>Awaiting verified transaction and market history</small></div><span className="pill">Pending data</span></div></section>}
+        {tab === 'Data Sources' && <section className="panel"><div className="panel-head"><div><h3>Data source registry</h3><p>Data quality and integration readiness</p></div><span className="pill amber-pill">Provider not connected</span></div><div className="source-row"><div className="source-symbol">IDX</div><div><b>Indonesia Stock Exchange</b><small>Market prices, index, volume, corporate actions</small></div><span className="source-state">Not connected</span></div><div className="source-row"><div className="source-symbol">API</div><div><b>Licensed market data provider</b><small>API credentials and redistribution/display rights required</small></div><span className="source-state">Configuration required</span></div><div className="source-row"><div className="source-symbol">FX</div><div><b>Macro & foreign exchange</b><small>BI rate, Rupiah, global market indicators</small></div><span className="source-state">Not connected</span></div><div className="integration-note"><b>Five-minute refresh target</b><p>Refresh scheduling will be enabled only after provider credentials, rate limits, and data-use permissions are validated. Secrets must be stored in Netlify environment variables, never in browser code.</p></div></section>}
+        <footer>© 2026 Nusantara Wealth Terminal <span>Built for disciplined investment decisions · Indonesia</span></footer>
+      </div>
+    </main>
+  </div>
+}
+function Metric({title,value,change,up}:{title:string,value:string,change:string,up?:boolean}) { return <div className="metric-card"><span>{title}</span><strong>{value}</strong><small className={up?'positive':change.startsWith('-')?'negative':'muted'}>{up?<ArrowUpRight size={13}/>:change.startsWith('-')?<ArrowDownRight size={13}/>:null}{change}</small></div> }
+function StockTable({rows}:{rows:{code:string,name:string,price:string,change:string,sector:string,signal:string}[]}) { return <div className="table-scroll"><table><thead><tr><th>COMPANY</th><th>LAST PRICE</th><th>CHANGE</th><th>SECTOR</th><th>STATUS</th></tr></thead><tbody>{rows.map(s=><tr key={s.code}><td><b>{s.code}</b><small>{s.name}</small></td><td>Rp {s.price}</td><td className={s.change.startsWith('+')?'positive':'negative'}>{s.change}</td><td>{s.sector}</td><td><span className="pill">{s.signal}</span></td></tr>)}</tbody></table>{rows.length===0&&<div className="empty">No matching sample equities.</div>}</div> }
