@@ -1,6 +1,4 @@
-import type { Handler } from '@netlify/functions'
-
-export const handler: Handler = async () => {
+export const handler = async () => {
   const configured = Boolean(process.env.MARKET_DATA_API_BASE_URL && process.env.MARKET_DATA_API_KEY)
   return {
     statusCode: 200,
